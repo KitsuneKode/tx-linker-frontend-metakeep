@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import Transaction from "./pages/Transaction";
 import Analytics from "./pages/Analytics";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 import NotFound from "./pages/NotFound";
 import { logPageView } from "./lib/metakeep";
 
@@ -38,7 +39,9 @@ const App = () => (
           <Route path="/analytics" element={<Analytics />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+
       </BrowserRouter>
+    <VercelAnalytics />
     </TooltipProvider>
   </QueryClientProvider>
 );
