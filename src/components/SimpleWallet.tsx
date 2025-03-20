@@ -18,7 +18,10 @@ interface SimpleWalletProps {
   transactionDetails?: {
     contractAddress: string;
     chainId: number;
+    functionName: string;
     functionInputs: { [key: string]: string };
+    rpcUrl: string;
+    data: string;
   };
 }
 
@@ -27,7 +30,7 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [metaKeep, setMetaKeep] = useState(null);
-  const [web3, setWeb3] = useState(null);
+  const [web3, setWeb3] = useState<Web3>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   // Initialize MetaKeep SDK
@@ -39,7 +42,7 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
         const metakeepInstance = new MetaKeep({
           appId: '9cc98bca-da35-4da8-8f10-655b3e51cb9e',
           chainId,
-          rpcNodeUrls: { [chainId]: getRpcUrlForChain(chainId) },
+          rpcNodeUrls: { [chainId]: transactionDetails.rpcUrl },
         });
 
         setMetaKeep(metakeepInstance);
@@ -84,28 +87,9 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
     setup();
   }, [transactionDetails]);
 
-  const getRpcUrlForChain = (chainId: number): string => {
-    switch (chainId) {
-      case 1:
-        return 'https://ethereum.publicnode.com';
-      case 5:
-        return 'https://goerli.infura.io/v3/';
-      case 137:
-        return 'https://polygon-rpc.com';
-      case 80001:
-        return 'https://rpc.ankr.com/polygon_mumbai';
-      case 42161:
-        return 'https://arb1.arbitrum.io/rpc';
-      case 43114:
-        return 'https://api.avax.network/ext/bc/C/rpc';
-      case 56:
-        return 'https://bsc-dataseed.binance.org';
-      default:
-        return 'https://rpc.ankr.com/polygon_mumbai';
-    }
-  };
+ 
 
-  const safeBigIntToJSON = (obj: any): any => {
+  const safeBigIntToJSON = (obj) => {
     return JSON.parse(JSON.stringify(obj, (_, value) => 
       typeof value === 'bigint' ? value.toString() : value
     ));
@@ -126,37 +110,38 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
     try {
       const to = transactionDetails?.functionInputs._to;
       const value = transactionDetails?.functionInputs._value;
-      const chainId = transactionDetails?.chainId;
       const gas = transactionDetails?.functionInputs.gas;
       const maxgas = transactionDetails?.functionInputs.maxgas;
       const maxpriogas = transactionDetails?.functionInputs.maxpriogas;
-      
+      const data = transactionDetails?.data;
       const web3Accounts = await metaKeep.getWallet();
 
-      
       const nonceValue = await web3.eth.getTransactionCount(
         web3Accounts['wallet']['ethAddress'],
         'latest'
       );
+
+      console.log('nonceValue',nonceValue);
       
-      const nonce = Number(nonceValue);
+      
 
       const txObj = {
-        type: 2,
-        from: web3Accounts['wallet']['ethAddress'],
         to,
-        value: value,
-        nonce,
-        data: '0x0123456789',
+        from: web3Accounts['wallet']['ethAddress'],
+        value: web3.utils.toHex(value),
+        nonce: web3.utils.toHex(nonceValue),
+        data : data,
         gas: Number(gas),
         maxFeePerGas: Number(maxgas),
         maxPriorityFeePerGas: Number(maxpriogas),
-        chainId,
+        chainId: Number(transactionDetails?.chainId),
       };
 
       console.log(txObj);
-      const result = await metaKeep.signTransaction(txObj, 'reason');
+      const result = await metaKeep.signTransaction(txObj, `invoking the function ${transactionDetails?.functionName}`);
       
+
+      // const result = await web3.eth.sendTransaction(txObj, web3Accounts['wallet']['ethAddress'] )
       console.log(result);
       
       const safeResult = safeBigIntToJSON(result);
@@ -178,7 +163,7 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
         )}...`,
       });
     } catch (error) {
-      console.error('Transaction error:', error);
+      console.error('Transaction error:', error.message);
       setError(error.message || 'Transaction failed');
       
       logTransactionEvent('transaction_error', {

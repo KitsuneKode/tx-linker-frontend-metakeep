@@ -80,7 +80,7 @@ export const logPageView = (pageName: string, additionalData = {}) => {
 };
 
 // Log transaction event for analytics
-export const logTransactionEvent = (event: string, data: any) => {
+export const logTransactionEvent = async (event: string, data: any) => {
   console.log(`[Analytics] ${event}:`, data);
 
   try {
@@ -91,7 +91,7 @@ export const logTransactionEvent = (event: string, data: any) => {
     };
 
     // Record event to analytics service
-    recordAnalyticsEvent(analyticsData);
+    await recordAnalyticsEvent(analyticsData);
   } catch (error) {
     console.error('Failed to log analytics event:', error);
   }
@@ -100,8 +100,9 @@ export const logTransactionEvent = (event: string, data: any) => {
 // Record analytics event to backend
 export const recordAnalyticsEvent = async (data: any) => {
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    await fetch(`${apiUrl}/api/analytics/event`, {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    console.log('apiUrl',apiUrl);
+    await fetch(`${apiUrl}/api/eventlog`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,8 +113,9 @@ export const recordAnalyticsEvent = async (data: any) => {
       }),
       keepalive: true,
     });
+    console.log('analytics event recorded');
   } catch (error) {
-    console.error('Failed to record analytics event to backend:', error);
+    console.error('Failed to record analytics event to backend:', error.message);
   }
 };
 
@@ -146,11 +148,8 @@ export const getAnalyticsData = async () => {
     
     const data = await response.json();
     
-    // Format the timestamps properly
-    return data.map((item: any) => ({
-      ...item,
-      timeKey: new Date(item.timeKey).toISOString()
-    }));
+    console.log('analytics data',data);
+  return data;
   } catch (error) {
     console.error('Failed to get analytics data from backend:', error);
     return [];

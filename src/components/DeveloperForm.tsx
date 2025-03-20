@@ -23,7 +23,9 @@ import {
   parseABI,
   getContractFunctions,
   createShareableLink,
+  logTransactionEvent,
 } from '@/lib/metakeep';
+
 import {
   ContractFunction,
   ChainOption,
@@ -32,19 +34,18 @@ import {
 } from '@/lib/types';
 import TransactionLink from '@/components/TransactionLink';
 import { toast } from '@/hooks/use-toast';
+import Web3 from 'web3';
+import { MetaKeep } from 'metakeep';
 
 const DeveloperForm: React.FC = () => {
-  const [abi, setAbi] = useState('');
-  const [value, setValue] = useState(0);
-  const [gas, setGas] = useState(0);
-  const [maxGas, setMaxGas] = useState(0);
-  const [maxPrioGas, setMaxPrioGas] = useState(0);
+  const [abi, setAbi] = useState<string>('');
   const [contractAddress, setContractAddress] = useState('');
   const [customRpcUrl, setCustomRpcUrl] = useState('');
   const [selectedChainId, setSelectedChainId] = useState<number>(1);
   const [contractFunctions, setContractFunctions] = useState<
     ContractFunction[]
   >([]);
+  const [web3, setWeb3] = useState<Web3 | null>(null);
   const [selectedFunction, setSelectedFunction] =
     useState<ContractFunction | null>(null);
   const [functionInputs, setFunctionInputs] = useState<{
@@ -53,11 +54,15 @@ const DeveloperForm: React.FC = () => {
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [abiError, setAbiError] = useState<string | null>(null);
+  const [metaKeepInstanceExists, setMetaKeepInstanceExists] = useState(false);
 
   // Reset function inputs when selected function changes
   useEffect(() => {
     setFunctionInputs({});
   }, [selectedFunction]);
+
+
+ 
 
   // Get RPC URL for the selected chain
   const getRpcUrl = () => {
@@ -108,13 +113,16 @@ const DeveloperForm: React.FC = () => {
   };
 
   // Generate shareable link
-  const handleGenerateLink = () => {
+  const handleGenerateLink = async () => {
     setLoading(true);
 
     try {
       if (!contractAddress) {
         throw new Error('Contract address is required');
       }
+
+      if(!abi)
+        throw new Error('ABI is required');
 
       if (!selectedFunction) {
         throw new Error('Select a function to execute');
@@ -127,12 +135,66 @@ const DeveloperForm: React.FC = () => {
         }
       });
 
+      if(!metaKeepInstanceExists){
+
+        const initSDK = async () => {
+          try {
+    
+            const metakeepInstance = new MetaKeep({
+              appId: '9cc98bca-da35-4da8-8f10-655b3e51cb9e',
+              chainId: selectedChainId,
+              rpcNodeUrls: { [selectedChainId]: getRpcUrl() },
+            });
+    
+            console.log('Initializing MetaKeep Web3 provider');
+            const web3Provider = await metakeepInstance.ethereum;
+            const web3Instance = new Web3(web3Provider);
+    
+            //@ts-ignore
+            const accounts = await web3Instance.eth.getAccounts();
+            
+            if (accounts && accounts.length > 0) {
+              
+              // Log wallet connection event
+              logTransactionEvent('wallet_connected', {
+                address: accounts[0],
+                chainId: selectedChainId
+              });
+            }
+            
+            setWeb3(web3Instance);
+    
+            console.log('MetaKeep SDK initialized successfully');
+          } catch (error) {
+            console.error('Failed to initialize MetaKeep SDK:', error);
+            
+            // Log wallet initialization error
+            logTransactionEvent('wallet_init_error', {
+              error: (error as Error).message,
+              chainId: selectedChainId
+            });
+          }
+        };
+    
+       
+          await initSDK();
+          setMetaKeepInstanceExists(true);
+
+      }
+
+
+      const web3 = new Web3();
+      const contract = new web3.eth.Contract(JSON.parse(abi), contractAddress);
+      const data = contract.methods[selectedFunction.name](...selectedFunction.inputs.map((input) => functionInputs[input.name])).encodeABI();
+
+ 
       const transactionDetails: TransactionDetails = {
         contractAddress,
         chainId: selectedChainId,
         rpcUrl: getRpcUrl(),
         functionName: selectedFunction.name,
         functionInputs,
+        data
       };
 
       const link = createShareableLink(transactionDetails);

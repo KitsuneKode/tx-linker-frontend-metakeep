@@ -41,8 +41,8 @@ const App = () => (
         </Routes>
 
       </BrowserRouter>
-    <VercelAnalytics />
     </TooltipProvider>
+    <VercelAnalytics />
   </QueryClientProvider>
 );
 

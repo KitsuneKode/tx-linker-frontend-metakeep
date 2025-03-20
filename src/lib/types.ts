@@ -29,6 +29,7 @@ export interface TransactionDetails {
   functionName: string;
   functionInputs: { [key: string]: string };
   abi?: string;
+  data: string;
 }
 
 export interface MetaKeepConfig {
