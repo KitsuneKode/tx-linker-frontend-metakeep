@@ -7,10 +7,9 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import Transaction from "./pages/Transaction";
-import Analytics from "./pages/Analytics";
-import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 import NotFound from "./pages/NotFound";
 import { logPageView } from "./lib/metakeep";
+import { Analytics } from "@vercel/analytics/react"
 
 // Component to handle route changes and log page views
 const RouteChangeTracker = () => {
@@ -42,7 +41,7 @@ const App = () => (
 
       </BrowserRouter>
     </TooltipProvider>
-    <VercelAnalytics />
+    <Analytics/>
   </QueryClientProvider>
 );
 
