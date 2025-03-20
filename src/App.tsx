@@ -8,8 +8,9 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import Transaction from "./pages/Transaction";
 import NotFound from "./pages/NotFound";
+import Analytics from "./pages/Analytics";
 import { logPageView } from "./lib/metakeep";
-import { Analytics } from "@vercel/analytics/react"
+import {  Analytics as VercelAnalytics } from "@vercel/analytics/react"
 
 // Component to handle route changes and log page views
 const RouteChangeTracker = () => {
@@ -35,13 +36,13 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/transaction/:txData" element={<Transaction />} />
-          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/analytics" element={<Analytics />} /> 
           <Route path="*" element={<NotFound />} />
         </Routes>
 
       </BrowserRouter>
     </TooltipProvider>
-    <Analytics/>
+    <VercelAnalytics />
   </QueryClientProvider>
 );
 
