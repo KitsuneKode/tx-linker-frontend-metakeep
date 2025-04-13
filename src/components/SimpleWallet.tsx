@@ -120,8 +120,8 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
     });
 
     try {
-      const to = transactionDetails?.functionInputs._to;
-      const value = transactionDetails?.functionInputs._value;
+      const to = transactionDetails?.functionInputs._to ?? "";
+      const value = transactionDetails?.functionInputs._value ?? "";
       const gas = transactionDetails?.functionInputs.gas;
       const maxgas = transactionDetails?.functionInputs.maxgas;
       const maxpriogas = transactionDetails?.functionInputs.maxpriogas;
@@ -214,7 +214,8 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
 
       toast({
         title: "Transaction failed",
-        description: error.cause || error || "Failed to send transaction",
+        description:
+          error.cause || error.message || "Failed to send transaction",
         variant: "destructive",
       });
     } finally {
