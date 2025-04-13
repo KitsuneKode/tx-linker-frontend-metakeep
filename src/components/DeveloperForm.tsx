@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,45 +7,41 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   parseABI,
   getContractFunctions,
   createShareableLink,
-  logTransactionEvent,
-} from "@/lib/metakeep";
+} from '@/lib/metakeep';
 
 import {
   ContractFunction,
-  ChainOption,
   SUPPORTED_CHAINS,
   TransactionDetails,
-} from "@/lib/types";
-import TransactionLink from "@/components/TransactionLink";
-import { toast } from "@/hooks/use-toast";
-import Web3 from "web3";
-import { MetaKeep } from "metakeep";
+} from '@/lib/types';
+import TransactionLink from '@/components/TransactionLink';
+import { toast } from '@/hooks/use-toast';
+import Web3 from 'web3';
 
 const DeveloperForm: React.FC = () => {
-  const [abi, setAbi] = useState<string>("");
-  const [contractAddress, setContractAddress] = useState("");
-  const [customRpcUrl, setCustomRpcUrl] = useState("");
+  const [abi, setAbi] = useState<string>('');
+  const [contractAddress, setContractAddress] = useState('');
+  const [customRpcUrl, setCustomRpcUrl] = useState('');
   const [selectedChainId, setSelectedChainId] = useState<number>(1);
   const [contractFunctions, setContractFunctions] = useState<
     ContractFunction[]
   >([]);
-  const [web3, setWeb3] = useState<Web3 | null>(null);
   const [selectedFunction, setSelectedFunction] =
     useState<ContractFunction | null>(null);
   const [functionInputs, setFunctionInputs] = useState<{
@@ -54,7 +50,7 @@ const DeveloperForm: React.FC = () => {
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [abiError, setAbiError] = useState<string | null>(null);
-  const [metaKeepInstanceExists, setMetaKeepInstanceExists] = useState(false);
+  // const [metaKeepInstanceExists, setMetaKeepInstanceExists] = useState(false);
 
   // Reset function inputs when selected function changes
   useEffect(() => {
@@ -65,9 +61,9 @@ const DeveloperForm: React.FC = () => {
   const getRpcUrl = () => {
     if (customRpcUrl) return customRpcUrl;
     const selectedChain = SUPPORTED_CHAINS.find(
-      (chain) => chain.id === selectedChainId,
+      (chain) => chain.id === selectedChainId
     );
-    return selectedChain?.rpcUrl || "";
+    return selectedChain?.rpcUrl || '';
   };
 
   // Parse ABI and extract contract functions
@@ -75,7 +71,7 @@ const DeveloperForm: React.FC = () => {
     try {
       const parsedABI = parseABI(abi);
       if (!parsedABI) {
-        setAbiError("Invalid ABI format");
+        setAbiError('Invalid ABI format');
         return;
       }
 
@@ -85,18 +81,18 @@ const DeveloperForm: React.FC = () => {
 
       if (functions.length === 0) {
         toast({
-          title: "No functions found",
+          title: 'No functions found',
           description: "The provided ABI doesn't contain any functions",
-          variant: "destructive",
+          variant: 'destructive',
         });
       } else {
         toast({
-          title: "ABI parsed successfully",
+          title: 'ABI parsed successfully',
           description: `Found ${functions.length} functions in the contract`,
         });
       }
     } catch (error) {
-      setAbiError("Failed to parse ABI");
+      setAbiError('Failed to parse ABI');
       setContractFunctions([]);
     }
   };
@@ -115,69 +111,76 @@ const DeveloperForm: React.FC = () => {
 
     try {
       if (!contractAddress) {
-        throw new Error("Contract address is required");
+        throw new Error('Contract address is required');
       }
 
-      if (!abi) throw new Error("ABI is required");
+      if (!abi) throw new Error('ABI is required');
 
       if (!selectedFunction) {
-        throw new Error("Select a function to execute");
+        throw new Error('Select a function to execute');
       }
 
       // Check if all required inputs are provided
       selectedFunction.inputs.forEach((input) => {
-        if (!functionInputs[input.name] && functionInputs[input.name] !== "") {
+        if (!functionInputs[input.name] && functionInputs[input.name] !== '') {
           throw new Error(`Parameter "${input.name}" is required`);
         }
       });
 
-      if (!metaKeepInstanceExists) {
-        const initSDK = async () => {
-          try {
-            const metakeepInstance = new MetaKeep({
-              appId: "9cc98bca-da35-4da8-8f10-655b3e51cb9e",
-              chainId: selectedChainId,
-              rpcNodeUrls: { [selectedChainId]: getRpcUrl() },
-            });
+      // if (!metaKeepInstanceExists) {
+      //   const initSDK = async () => {
+      //     try {
+      //       const metakeepInstance = new MetaKeep({
+      //         appId: '9cc98bca-da35-4da8-8f10-655b3e51cb9e',
+      //         chainId: selectedChainId,
+      //         rpcNodeUrls: { [selectedChainId]: getRpcUrl() },
+      //       });
 
-            console.log("Initializing MetaKeep Web3 provider");
-            const web3Provider = await metakeepInstance.ethereum;
-            const web3Instance = new Web3(web3Provider);
+      //       console.log('Initializing MetaKeep Web3 provider');
+      //       const web3Provider = await metakeepInstance.ethereum;
+      //       const web3Instance = new Web3(web3Provider);
 
-            //@ts-ignore
-            const accounts = await web3Instance.eth.getAccounts();
+      //       const accounts = await web3Instance.eth.getAccounts();
 
-            if (accounts && accounts.length > 0) {
-              // Log wallet connection event
-              logTransactionEvent("wallet_connected", {
-                address: accounts[0],
-                chainId: selectedChainId,
-              });
-            }
+      //       if (accounts && accounts.length > 0) {
+      //         // Log wallet connection event
+      //         logTransactionEvent('wallet_connected', {
+      //           address: accounts[0],
+      //           chainId: selectedChainId,
+      //         });
+      //       }
 
-            setWeb3(web3Instance);
+      //       setWeb3(web3Instance);
 
-            console.log("MetaKeep SDK initialized successfully");
-          } catch (error) {
-            console.error("Failed to initialize MetaKeep SDK:", error);
+      //       console.log('MetaKeep SDK initialized successfully');
+      //     } catch (error) {
+      //       console.error('Failed to initialize MetaKeep SDK:', error);
 
-            // Log wallet initialization error
-            logTransactionEvent("wallet_init_error", {
-              error: (error as Error).message,
-              chainId: selectedChainId,
-            });
-          }
-        };
+      //       // Log wallet initialization error
+      //       logTransactionEvent('wallet_init_error', {
+      //         error: (error as Error).message,
+      //         chainId: selectedChainId,
+      //       });
+      //     }
+      //   };
 
-        await initSDK();
-        setMetaKeepInstanceExists(true);
-      }
+      //   await initSDK();
+      //   setMetaKeepInstanceExists(true);
+      // }
 
-      const web3 = new Web3();
+      const web3 = new Web3(getRpcUrl());
       const contract = new web3.eth.Contract(JSON.parse(abi), contractAddress);
-      const data = contract.methods[selectedFunction.name](
-        ...selectedFunction.inputs.map((input) => functionInputs[input.name]),
-      ).encodeABI();
+      const isViewOrPure =
+        selectedFunction.stateMutability === 'view' ||
+        selectedFunction.stateMutability === 'pure';
+
+      const method = contract.methods[selectedFunction.name](
+        ...selectedFunction.inputs.map((input) => functionInputs[input.name])
+      );
+
+      const outputType = selectedFunction.outputs?.map((o) => o.type);
+
+      const data = method.encodeABI();
 
       const transactionDetails: TransactionDetails = {
         contractAddress,
@@ -185,21 +188,23 @@ const DeveloperForm: React.FC = () => {
         rpcUrl: getRpcUrl(),
         functionName: selectedFunction.name,
         functionInputs,
+        isReadOnly: isViewOrPure, // Set based on function type
         data,
+        outputType,
       };
 
       const link = createShareableLink(transactionDetails);
       setGeneratedLink(link);
 
       toast({
-        title: "Link generated",
-        description: "Transaction link created successfully",
+        title: 'Link generated',
+        description: 'Transaction link created successfully',
       });
     } catch (error) {
       toast({
-        title: "Failed to generate link",
-        description: error.message || "An error occurred",
-        variant: "destructive",
+        title: 'Failed to generate link',
+        description: error.message || 'An error occurred',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -306,7 +311,7 @@ const DeveloperForm: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="function-select">Select Function</Label>
                 <Select
-                  value={selectedFunction?.name || ""}
+                  value={selectedFunction?.name || ''}
                   onValueChange={(value) => {
                     const func =
                       contractFunctions.find((f) => f.name === value) || null;
@@ -334,13 +339,13 @@ const DeveloperForm: React.FC = () => {
                       {selectedFunction.name}(
                       {selectedFunction.inputs
                         .map((input) => `${input.type} ${input.name}`)
-                        .join(", ")}
+                        .join(', ')}
                       )
                       {selectedFunction.outputs.length > 0
                         ? `returns (${selectedFunction.outputs
                             .map((output) => `${output.type} ${output.name}`)
-                            .join(", ")})`
-                        : ""}
+                            .join(', ')})`
+                        : ''}
                     </p>
                   </div>
 
@@ -355,7 +360,7 @@ const DeveloperForm: React.FC = () => {
                           <Input
                             id={input.name}
                             placeholder={`Enter ${input.type} value`}
-                            value={functionInputs[input.name] || ""}
+                            value={functionInputs[input.name] || ''}
                             onChange={(e) =>
                               handleInputChange(input.name, e.target.value)
                             }
@@ -367,31 +372,31 @@ const DeveloperForm: React.FC = () => {
                         <Input
                           id="gas"
                           placeholder={`Enter gas value`}
-                          value={functionInputs["gas"]}
+                          value={functionInputs['gas']}
                           onChange={(e) =>
-                            handleInputChange("gas", e.target.value)
+                            handleInputChange('gas', e.target.value)
                           }
                         />
-                      </div>{" "}
+                      </div>{' '}
                       <div key="maxgas" className="space-y-1">
                         <Label htmlFor="maxgas">MaxFeePerGas</Label>
                         <Input
                           id="maxgas"
                           placeholder={`Enter maxfeepergas value`}
-                          value={functionInputs["maxgas"]}
+                          value={functionInputs['maxgas']}
                           onChange={(e) =>
-                            handleInputChange("maxgas", e.target.value)
+                            handleInputChange('maxgas', e.target.value)
                           }
                         />
-                      </div>{" "}
+                      </div>{' '}
                       <div key="maxpriogas" className="space-y-1">
                         <Label htmlFor="maxpriogas">MaxPriorityFeePerGas</Label>
                         <Input
                           id="maxpriogas"
                           placeholder={`Enter MaxPriorityFeePerGas value`}
-                          value={functionInputs["maxpriogas"] || ""}
+                          value={functionInputs['maxpriogas'] || ''}
                           onChange={(e) =>
-                            handleInputChange("maxpriogas", e.target.value)
+                            handleInputChange('maxpriogas', e.target.value)
                           }
                         />
                       </div>
@@ -411,7 +416,7 @@ const DeveloperForm: React.FC = () => {
                 className="w-full transition-all duration-300 hover:shadow-md"
                 disabled={!selectedFunction || loading}
               >
-                {loading ? "Generating..." : "Generate Transaction Link"}
+                {loading ? 'Generating...' : 'Generate Transaction Link'}
               </Button>
             </CardFooter>
           </TabsContent>
