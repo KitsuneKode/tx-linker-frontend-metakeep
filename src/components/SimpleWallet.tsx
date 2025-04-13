@@ -176,7 +176,7 @@ const SimpleWallet: React.FC<SimpleWalletProps> = ({ transactionDetails }) => {
           if (typeof decodedResult === 'object') {
             setResponse(JSON.stringify(decodedResult, null, 2));
           } else {
-            setResponse(decodedResult);
+            setResponse(decodedResult.toString());
           }
 
           toast({
