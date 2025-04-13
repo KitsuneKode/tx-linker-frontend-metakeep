@@ -1,8 +1,21 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
 
 interface ActivityChartProps {
   data: { hour: string; count: number }[];
@@ -11,34 +24,38 @@ interface ActivityChartProps {
 
 const ActivityChart = ({ data, isLoading = false }: ActivityChartProps) => {
   // Format data for display
-  const formattedData = data.map(item => {
+  const formattedData = data.map((item) => {
     // For time strings that are already formatted (like "3:00 PM")
-    if (typeof item.hour === 'string' && 
-        (item.hour.includes('AM') || item.hour.includes('PM') || 
-         item.hour.includes(':') || /^\d{1,2}(:\d{2})?$/.test(item.hour))) {
+    if (
+      typeof item.hour === 'string' &&
+      (item.hour.includes('AM') ||
+        item.hour.includes('PM') ||
+        item.hour.includes(':') ||
+        /^\d{1,2}(:\d{2})?$/.test(item.hour))
+    ) {
       return {
         ...item,
-        formattedHour: item.hour
+        formattedHour: item.hour,
       };
     }
-    
+
     // For ISO date strings
     try {
       const date = new Date(item.hour);
       if (!isNaN(date.getTime())) {
         return {
           ...item,
-          formattedHour: format(date, "h:mm a")
+          formattedHour: format(date, 'h:mm a'),
         };
       }
     } catch (e) {
       // Error parsing date, fall back to original value
     }
-    
+
     // Default case, just use the original value
     return {
       ...item,
-      formattedHour: item.hour
+      formattedHour: item.hour,
     };
   });
 
@@ -60,15 +77,20 @@ const ActivityChart = ({ data, isLoading = false }: ActivityChartProps) => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="formattedHour" className="text-xs" />
                 <YAxis className="text-xs" />
-                <Tooltip 
-                  contentStyle={{ 
+                <Tooltip
+                  contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))'
+                    border: '1px solid hsl(var(--border))',
                   }}
-                  formatter={(value, name) => [value, 'Events']}
+                  formatter={(value, name) => [value, name]}
                   labelFormatter={(label) => `Time: ${label}`}
                 />
-                <Bar dataKey="count" fill="hsl(var(--primary))" />
+                <Bar
+                  dataKey="count"
+                  fill="hsl(var(--primary))"
+                  name="Activity"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           ) : (

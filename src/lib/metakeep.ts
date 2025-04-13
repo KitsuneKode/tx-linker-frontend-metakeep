@@ -1,4 +1,3 @@
-
 import { TransactionDetails } from './types';
 
 // Parse ABI string to JSON
@@ -21,14 +20,14 @@ export const getContractFunctions = (abi) => {
 export const createShareableLink = (transactionDetails: TransactionDetails) => {
   const baseUrl = window.location.origin;
   const txData = encodeURIComponent(btoa(JSON.stringify(transactionDetails)));
-  
+
   // Log analytics for link creation
   logTransactionEvent('transaction_link_created', {
     contractAddress: transactionDetails.contractAddress,
     chainId: transactionDetails.chainId,
     functionName: transactionDetails.functionName,
   });
-  
+
   return `${baseUrl}/transaction/${txData}`;
 };
 
@@ -42,17 +41,17 @@ export const decodeTransactionFromUrl = (
       console.warn('Invalid URL parameter: :txData');
       return null;
     }
-    
+
     // Some URLs might have extra slashes or encoding issues
     const cleanedParam = decodeURIComponent(urlParam);
     const decoded = JSON.parse(atob(cleanedParam));
-    
+
     // Validate the decoded object has required fields
     if (!decoded.contractAddress || !decoded.chainId || !decoded.functionName) {
       console.warn('Decoded transaction missing required fields');
       return null;
     }
-    
+
     return decoded as TransactionDetails;
   } catch (error) {
     console.error('Failed to decode transaction from URL:', error);
@@ -63,7 +62,7 @@ export const decodeTransactionFromUrl = (
 // Log page view to track user activity
 export const logPageView = (pageName: string, additionalData = {}) => {
   console.log(`[Analytics] Page View: ${pageName}`);
-  
+
   try {
     const pageViewData = {
       timestamp: new Date().toISOString(),
@@ -71,7 +70,7 @@ export const logPageView = (pageName: string, additionalData = {}) => {
       path: window.location.pathname,
       ...additionalData,
     };
-    
+
     // Record page load to backend
     recordPageLoadToBackend(pageViewData);
   } catch (error) {
@@ -101,7 +100,7 @@ export const logTransactionEvent = async (event: string, data: any) => {
 export const recordAnalyticsEvent = async (data: any) => {
   try {
     const apiUrl = import.meta.env.VITE_API_URL;
-    console.log('apiUrl',apiUrl);
+    console.log('apiUrl', apiUrl);
     await fetch(`${apiUrl}/api/eventlog`, {
       method: 'POST',
       headers: {
@@ -115,7 +114,10 @@ export const recordAnalyticsEvent = async (data: any) => {
     });
     console.log('analytics event recorded');
   } catch (error) {
-    console.error('Failed to record analytics event to backend:', error.message);
+    console.error(
+      'Failed to record analytics event to backend:',
+      error.message
+    );
   }
 };
 
@@ -140,18 +142,38 @@ export const recordPageLoadToBackend = async (data: any) => {
 export const getAnalyticsData = async () => {
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/analytics/pageloads`);
-    
+    const response = await fetch(`${apiUrl}/api/events`);
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
-    console.log('analytics data',data);
-  return data;
+
+    console.log('analytics data', data);
+    return data;
   } catch (error) {
     console.error('Failed to get analytics data from backend:', error);
+    return [];
+  }
+};
+
+// Get page load data from backend API
+export const getPageLoads = async () => {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/analytics/pageloads`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log('page loads data', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to get page loads data from backend:', error);
     return [];
   }
 };
